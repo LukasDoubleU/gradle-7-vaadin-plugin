@@ -27,7 +27,7 @@ plugins {
     id 'maven-publish'
     id 'idea'
     id 'codenarc'
-    id 'com.gradle.plugin-publish' version '0.10.1'
+    id 'com.gradle.plugin-publish' version '0.21.0'
     id 'checkstyle'
 }
 
@@ -39,7 +39,7 @@ plugins {
 
 defaultTasks 'jar'
 group = "com.devsoap.plugin"
-version = project.hasProperty('BUILD_VERSION') ? getProperty('BUILD_VERSION') : 'SNAPSHOT-'+ new Date().format('yyyyMMdd')
+version = 'dialog'
 archivesBaseName ='gradle-vaadin-plugin'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -47,25 +47,6 @@ ext {
     testCategory = project.hasProperty('TEST_CATEGORY') ? getProperty('TEST_CATEGORY') : null
 }
 
-
-/***********************************************************************************************************************
- *
- * Sources
- *
- **********************************************************************************************************************/
-
-sourceSets {
-    functionalTest {
-        groovy {
-            srcDir file('src/functionalTest/groovy')
-        }
-        resources {
-            srcDir file('src/functionalTest/resources')
-        }
-        compileClasspath += sourceSets.main.output + configurations.testRuntime
-        runtimeClasspath += output + compileClasspath
-    }
-}
 
 /***********************************************************************************************************************
  *
@@ -126,13 +107,6 @@ idea {
  **********************************************************************************************************************/
 
 /**
- * Compiles the tests
- */
-compileFunctionalTestGroovy {
-    classpath += configurations.proxyTest
-}
-
-/**
  * Processes the resources before compilation
  */
 processResources {
@@ -143,6 +117,8 @@ processResources {
     // Mark processed resources as dirty if build properties change
     inputs.property('version', project.version)
     inputs.property('debugdir', debugDir)
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     // Apply build properties
     from(sourceSets.main.resources.srcDirs){
@@ -208,131 +184,6 @@ groovydoc {
 
 /***********************************************************************************************************************
  *
- * Tests
- *
- **********************************************************************************************************************/
-
-
-/**
- * Run integration tests with a different tasks so they are only run when running check
- */
-task uncategorizedTests(type:Test, dependsOn:['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    useJUnit {
-        excludeCategories 'com.devsoap.plugin.categories.WidgetsetCompile'
-        excludeCategories 'com.devsoap.plugin.categories.ThemeCompile'
-        excludeCategories 'com.devsoap.plugin.categories.WidgetsetAndThemeCompile'
-        excludeCategories 'com.devsoap.plugin.categories.RunProject'
-    }
-    exclude  '**/tests/*ProxyTest*'
-    systemProperty 'integrationTestProjectVersion', version
-    maxParallelForks = Runtime.runtime.availableProcessors() > 1 ? Runtime.runtime.availableProcessors() - 1 : 1
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += sourceSets.functionalTest.runtimeClasspath
-}
-
-task widgetsetCompileTests(type:Test, dependsOn:['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    useJUnit {
-        includeCategories 'com.devsoap.plugin.categories.WidgetsetCompile'
-        excludeCategories 'com.devsoap.plugin.categories.ThemeCompile'
-    }
-    systemProperty 'integrationTestProjectVersion', version
-    maxParallelForks = Runtime.runtime.availableProcessors() > 1 ? Runtime.runtime.availableProcessors() - 1 : 1
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += sourceSets.functionalTest.runtimeClasspath
-}
-
-task themeCompileTests(type:Test, dependsOn:['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    useJUnit {
-        excludeCategories 'com.devsoap.plugin.categories.WidgetsetCompile'
-        includeCategories 'com.devsoap.plugin.categories.ThemeCompile'
-    }
-    systemProperty 'integrationTestProjectVersion', version
-    maxParallelForks = Runtime.runtime.availableProcessors() > 1 ? Runtime.runtime.availableProcessors() - 1 : 1
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += sourceSets.functionalTest.runtimeClasspath
-}
-
-task fullCompileTests(type:Test, dependsOn:['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    useJUnit {
-        includeCategories 'com.devsoap.plugin.categories.WidgetsetAndThemeCompile'
-    }
-    systemProperty 'integrationTestProjectVersion', version
-    maxParallelForks = Runtime.runtime.availableProcessors() > 1 ? Runtime.runtime.availableProcessors() - 1 : 1
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += sourceSets.functionalTest.runtimeClasspath
-}
-
-task runProjectTests(type:Test, dependsOn:['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    useJUnit {
-        includeCategories 'com.devsoap.plugin.categories.RunProject'
-    }
-    systemProperty 'integrationTestProjectVersion', version
-    maxParallelForks = Runtime.runtime.availableProcessors() > 1 ? Runtime.runtime.availableProcessors() - 1 : 1
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += sourceSets.functionalTest.runtimeClasspath
-}
-
-/**
- * Runs proxy integration test that needs special configuration
- */
-task proxyTest(type:Test, dependsOn: ['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    include  '**/tests/*ProxyTest*'
-    systemProperty 'integrationTestProjectVersion', version
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += configurations.proxyTest + sourceSets.functionalTest.runtimeClasspath
-}
-
-/**
- * Runs all the tests. Use this with --tests filter to run filtered tests in Idea.
- */
-task allTests(type:Test, dependsOn:['test','jar']) {
-    testLogging {
-        exceptionFormat "full"
-        showStandardStreams = true
-    }
-    systemProperty 'integrationTestProjectVersion', version
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath += sourceSets.functionalTest.runtimeClasspath
-}
-
-if(!ext.testCategory) {
-    check.dependsOn 'uncategorizedTests'
-    check.dependsOn 'widgetsetCompileTests'
-    check.dependsOn 'themeCompileTests'
-    check.dependsOn 'fullCompileTests'
-    check.dependsOn 'runProjectTests'
-    check.dependsOn 'proxyTest'
-} else{
-    check.dependsOn ext.testCategory
-}
-
-
-/***********************************************************************************************************************
- *
  * Quality
  *
  ***********************************************************************************************************************/
@@ -375,6 +226,7 @@ gradlePlugin {
         vaadinPlugin {
             id = 'com.devsoap.plugin.vaadin'
             implementationClass = 'com.devsoap.plugin.GradleVaadinPlugin'
+            displayName = 'Gradle Vaadin plugin'
         }
     }
 }
@@ -384,12 +236,6 @@ pluginBundle {
     vcsUrl = 'https://github.com/johndevs/gradle-vaadin-plugin'
     description = 'Build Vaadin applications with Gradle!'
     tags = ['vaadin', 'java', 'groovy', 'kotlin']
-    plugins {
-        vaadinPlugin {
-            id = gradlePlugin.plugins.vaadinPlugin.id
-            displayName = 'Gradle Vaadin plugin'
-        }
-    }
 
     mavenCoordinates {
         groupId = 'com.devsoap.plugin'
@@ -404,7 +250,24 @@ pluginBundle {
  *
  **********************************************************************************************************************/
 wrapper {
-    gradleVersion = '5.6'
+    gradleVersion = '7.5'
     distributionUrl = distributionUrl.replace('bin', 'all') // Download sources
 }
 
+publishing {
+
+    repositories {
+        maven {
+            name = 'dialims-libraries'
+            url = 'http://nexus.dialog:8081/repository/dialims-libraries/'
+            allowInsecureProtocol = true
+            credentials {
+                username "admin"
+                password "SIEHE PRUEMITTEL"
+            }
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+}

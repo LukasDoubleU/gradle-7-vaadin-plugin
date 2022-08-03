@@ -32,6 +32,8 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 import java.util.concurrent.TimeUnit
@@ -51,31 +53,80 @@ class CompileWidgetsetTask extends DefaultTask {
 
     private static final WIDGETSET_CDN_URL = 'https://wsc.vaadin.com/'
 
+    @Input
+    @Optional
     private final Property<String> style = project.objects.property(String)
+    @Input
+    @Optional
     private final Property<Integer> optimize = project.objects.property(Integer)
+    @Input
+    @Optional
     private final Property<Boolean> logEnabled = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<String> logLevel = project.objects.property(String)
+    @Input
+    @Optional
     private final Property<Integer> localWorkers = project.objects.property(Integer)
+    @Input
+    @Optional
     private final Property<Boolean> draftCompile = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<Boolean> strict = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<String> userAgent = project.objects.property(String)
+    @Input
+    @Optional
     private final ListProperty<String> jvmArgs = project.objects.listProperty(String)
+    @Input
+    @Optional
     private final ListProperty<String> extraArgs = project.objects.listProperty(String)
+    @Input
+    @Optional
     private final ListProperty<String> sourcePaths = project.objects.listProperty(String)
+    @Input
+    @Optional
     private final Property<Boolean> collapsePermutations = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final ListProperty<String> extraInherits = project.objects.listProperty(String)
+    @Input
+    @Optional
     private final Property<Boolean> gwtSdkFirstInClasspath = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<String> outputDirectory = project.objects.property(String)
+    @Input
+    @Optional
     private final Property<Boolean> widgetsetCDN = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<Boolean> profiler = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<Boolean> manageWidgetset = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<String> widgetset = project.objects.property(String)
+    @Input
+    @Optional
     private final Property<String> widgetsetGenerator = project.objects.property(String)
-
+    @Input
+    @Optional
     private final Property<Boolean> proxyEnabled = project.objects.property(Boolean)
+    @Input
+    @Optional
     private final Property<Integer> proxyPort = project.objects.property(Integer)
+    @Input
+    @Optional
     private final Property<String> proxyScheme = project.objects.property(String)
+    @Input
+    @Optional
     private final Property<String> proxyHost = project.objects.property(String)
+    @Input
+    @Optional
     private final Property<AuthConfig> proxyAuth = project.objects.property(AuthConfig)
 
     private Closure<Map> queryWidgetsetRequest = { version, style ->
@@ -83,17 +134,17 @@ class CompileWidgetsetTask extends DefaultTask {
         project.logger.info("Querying widgetset with addons $addons")
 
         [
-            path: '/api/compiler/compile',
-            query: [
-                    'compile.async' : true,
-            ],
-            body: [
-                    vaadinVersion:version,
-                    eager: [],
-                    addons:addons,
-                    compileStyle:style
-            ],
-            requestContentType:ContentType.JSON
+                path              : '/api/compiler/compile',
+                query             : [
+                        'compile.async': true,
+                ],
+                body              : [
+                        vaadinVersion: version,
+                        eager        : [],
+                        addons       : addons,
+                        compileStyle : style
+                ],
+                requestContentType: ContentType.JSON
         ]
     }
 
@@ -102,14 +153,14 @@ class CompileWidgetsetTask extends DefaultTask {
      */
     private Closure<Map> downloadWidgetsetRequest = { version, style ->
         [
-            path: '/api/compiler/download',
-            body: [
-                    vaadinVersion:version,
-                    eager: [],
-                    addons:Util.findAddonsInProject(project),
-                    compileStyle:style
-            ],
-            requestContentType:ContentType.JSON
+                path              : '/api/compiler/download',
+                body              : [
+                        vaadinVersion: version,
+                        eager        : [],
+                        addons       : Util.findAddonsInProject(project),
+                        compileStyle : style
+                ],
+                requestContentType: ContentType.JSON
         ]
     }
 
@@ -119,7 +170,7 @@ class CompileWidgetsetTask extends DefaultTask {
     private Closure<Void> writeWidgetsetToFileSystem = { HttpResponseDecorator response, ZipInputStream zipStream ->
 
         // Check for redirect
-        if ( response.status == 307 ) {
+        if (response.status == 307) {
             String newUrl = response.headers['Location'].value
             project.logger.info("Widgetset download was redirected to $newUrl")
             downloadWidgetsetZip(newUrl)
@@ -127,12 +178,12 @@ class CompileWidgetsetTask extends DefaultTask {
         }
 
         def generatedWidgetSetName = response.headers['x-amz-meta-wsid']?.value
-        if ( !generatedWidgetSetName ) {
+        if (!generatedWidgetSetName) {
             generatedWidgetSetName = response.headers['wsId'].value
         }
 
         def widgetsetDirectory = new File(Util.getWidgetsetDirectory(project), generatedWidgetSetName)
-        if ( widgetsetDirectory.exists() ) {
+        if (widgetsetDirectory.exists()) {
             widgetsetDirectory.deleteDir()
         }
         widgetsetDirectory.mkdirs()
@@ -146,7 +197,7 @@ class CompileWidgetsetTask extends DefaultTask {
             def fileName = ze.name as String
             File outfile = new File(widgetsetDirectory, fileName)
 
-            if ( ze.directory ) {
+            if (ze.directory) {
                 outfile.mkdirs()
                 continue
             }
@@ -156,7 +207,7 @@ class CompileWidgetsetTask extends DefaultTask {
 
             // Create file byte by byte
             FileOutputStream fout = new FileOutputStream(outfile)
-            for ( int c = zipStream.read(); c != -1; c = zipStream.read() ) {
+            for (int c = zipStream.read(); c != -1; c = zipStream.read()) {
                 fout.write(c)
             }
             zipStream.closeEntry()
@@ -174,15 +225,15 @@ class CompileWidgetsetTask extends DefaultTask {
         switch (Util.getProjectType(project)) {
             case ProjectType.JAVA:
                 TemplateUtil.writeTemplate("${widgetsetName}.java", sourceDir,
-                        "${widgetsetName}.java",  substitutions)
+                        "${widgetsetName}.java", substitutions)
                 break
             case ProjectType.GROOVY:
                 TemplateUtil.writeTemplate("${widgetsetName}.groovy", sourceDir,
-                        "${widgetsetName}.groovy",  substitutions)
+                        "${widgetsetName}.groovy", substitutions)
                 break
             case ProjectType.KOTLIN:
                 TemplateUtil.writeTemplate("${widgetsetName}.kt", sourceDir,
-                        "${widgetsetName}.kt",  substitutions)
+                        "${widgetsetName}.kt", substitutions)
                 break
 
         }
@@ -216,7 +267,7 @@ class CompileWidgetsetTask extends DefaultTask {
 
             // Set task dependencies
 
-            if ( getWidgetsetCDN() ) {
+            if (getWidgetsetCDN()) {
                 dependsOn 'processResources'
             } else {
                 dependsOn('classes', UpdateWidgetsetTask.NAME, BuildClassPathJar.NAME)
@@ -225,7 +276,7 @@ class CompileWidgetsetTask extends DefaultTask {
             /* Monitor changes in dependencies since upgrading a
             * dependency should also trigger a recompile of the widgetset
             */
-            inputs.files(project.configurations.compile)
+            inputs.files(project.configurations.compileClasspath)
             inputs.files(project.configurations[GradleVaadinPlugin.CONFIGURATION_CLIENT])
             inputs.files(project.configurations[GradleVaadinPlugin.CONFIGURATION_CLIENT_COMPILE])
 
@@ -248,7 +299,7 @@ class CompileWidgetsetTask extends DefaultTask {
             }
 
             // Add classpath jar
-            if ( project.vaadin.useClassPathJar ) {
+            if (project.vaadin.useClassPathJar) {
                 BuildClassPathJar pathJarTask = project.tasks.getByName(BuildClassPathJar.NAME)
                 inputs.file(pathJarTask.archivePath)
             }
@@ -266,13 +317,13 @@ class CompileWidgetsetTask extends DefaultTask {
      */
     @TaskAction
     void run() {
-        if ( getWidgetsetCDN() ) {
+        if (getWidgetsetCDN()) {
             compileRemotely()
             return
         }
 
         String widgetset = Util.getWidgetset(project)
-        if ( widgetset ) {
+        if (widgetset) {
             compileLocally(widgetset)
         }
     }
@@ -421,7 +472,7 @@ class CompileWidgetsetTask extends DefaultTask {
      * Source paths where the compiler will look for source files
      */
     String[] getSourcePaths() {
-        sourcePaths.present ? sourcePaths.get().toArray(new String[sourcePaths.get().size()]): null
+        sourcePaths.present ? sourcePaths.get().toArray(new String[sourcePaths.get().size()]) : null
     }
 
     /**
@@ -670,6 +721,7 @@ class CompileWidgetsetTask extends DefaultTask {
      * @return
      *      the client
      */
+
     private RESTClient makeClient(String url) {
         RESTClient client = new RESTClient(url)
         client.headers['User-Agent'] = getUA()
@@ -692,11 +744,12 @@ class CompileWidgetsetTask extends DefaultTask {
      * @param client
      *      the REST client
      */
+
     private void configureClient(RESTClient client) {
-        if(getProxyEnabled()) {
+        if (getProxyEnabled()) {
             client.ignoreSSLIssues()
             client.setProxy(getProxyHost(), getProxyPort(), getProxyScheme())
-            if(getProxyAuth()) {
+            if (getProxyAuth()) {
                 client.setAuthConfig(getProxyAuth())
             }
         }
@@ -705,6 +758,7 @@ class CompileWidgetsetTask extends DefaultTask {
     /*
      * Get the User-Agent for the Gradle client
      */
+
     @Memoized
     private static String getUA() {
         StringBuilder ua = new StringBuilder("VWSCDN-1.0.gradle-${GradleVaadinPlugin.version} (")
@@ -723,6 +777,7 @@ class CompileWidgetsetTask extends DefaultTask {
     /*
      * Compiles the widgetset on the remote CDN
      */
+
     private void compileRemotely() {
 
         // Ensure widgetset directory exists
@@ -730,10 +785,10 @@ class CompileWidgetsetTask extends DefaultTask {
 
         long timeout = TimeUnit.MINUTES.toMillis(5)
 
-        while(true) {
+        while (true) {
             Map widgetsetInfo = queryRemoteWidgetset()
             String status = widgetsetInfo.status as String
-            switch(status) {
+            switch (status) {
                 case 'NOT_FOUND':
                 case 'UNKNOWN':
                 case 'ERROR':
@@ -744,7 +799,7 @@ class CompileWidgetsetTask extends DefaultTask {
                     logger.info("Widgetset is compiling with status $status. " +
                             "Waiting 10 seconds and querying again.")
                     long timeoutInterval = TimeUnit.SECONDS.toMillis(10)
-                    if ( timeout > 0 ) {
+                    if (timeout > 0) {
                         sleep(timeoutInterval)
                         timeout -= timeoutInterval
                     } else {
@@ -763,6 +818,7 @@ class CompileWidgetsetTask extends DefaultTask {
     /*
      * Compiles the widgetset locally
      */
+
     private void compileLocally(String widgetset = Util.getWidgetset(project)) {
 
         // Re-create directory
@@ -773,11 +829,11 @@ class CompileWidgetsetTask extends DefaultTask {
 
         List widgetsetCompileProcess = [Util.getJavaBinary(project)]
 
-        if ( getJvmArgs() ) {
+        if (getJvmArgs()) {
             widgetsetCompileProcess += getJvmArgs() as List
         }
 
-        widgetsetCompileProcess += ['-cp',  classpath.asPath]
+        widgetsetCompileProcess += ['-cp', classpath.asPath]
 
         widgetsetCompileProcess += ["-Dgwt.persistentunitcachedir=${project.buildDir.canonicalPath}"]
         widgetsetCompileProcess += ["-Dgwt.forceVersionCheckURL=foobar"]
@@ -793,15 +849,15 @@ class CompileWidgetsetTask extends DefaultTask {
         widgetsetCompileProcess += ['-localWorkers', getLocalWorkers()]
         widgetsetCompileProcess += ['-workDir', project.buildDir.canonicalPath + File.separator + 'tmp']
 
-        if ( getDraftCompile() ) {
+        if (getDraftCompile()) {
             widgetsetCompileProcess += '-draftCompile'
         }
 
-        if ( getStrict() ) {
+        if (getStrict()) {
             widgetsetCompileProcess += '-strict'
         }
 
-        if ( getExtraArgs() ) {
+        if (getExtraArgs()) {
             widgetsetCompileProcess += getExtraArgs() as List
         }
 
@@ -811,7 +867,7 @@ class CompileWidgetsetTask extends DefaultTask {
         boolean failed = false
         Util.logProcess(project, process, 'widgetset-compile.log') { String output ->
             // Monitor log for errors
-            if ( output.trim().startsWith('[ERROR]') ) {
+            if (output.trim().startsWith('[ERROR]')) {
                 failed = true
                 return false
             }
@@ -826,7 +882,7 @@ class CompileWidgetsetTask extends DefaultTask {
          */
         new File(Util.getWidgetsetDirectory(project), 'WEB-INF').deleteDir()
 
-        if ( failed || result != 0 ) {
+        if (failed || result != 0) {
             // Terminate build
             throw new GradleException('Widgetset failed to compile. See error log.')
         }
@@ -835,6 +891,7 @@ class CompileWidgetsetTask extends DefaultTask {
     /*
      * Queries the CDN fro a widgetset
      */
+
     private Map queryRemoteWidgetset() {
         logger.info('Querying widgetset for Vaadin ' + Util.getResolvedVaadinVersion(project))
         RESTClient client = new RESTClient(WIDGETSET_CDN_URL)
@@ -852,6 +909,7 @@ class CompileWidgetsetTask extends DefaultTask {
      * @return
      *      Returns a stream with the widgetset files
      */
+
     private void downloadWidgetset() {
         makeClient(WIDGETSET_CDN_URL).post(downloadWidgetsetRequest(
                 Util.getResolvedVaadinVersion(project),
@@ -865,6 +923,7 @@ class CompileWidgetsetTask extends DefaultTask {
      * @param url
      *      the full URL of the zip archive
      */
+
     protected void downloadWidgetsetZip(String url) {
         makeClient(url).get([:], writeWidgetsetToFileSystem)
     }

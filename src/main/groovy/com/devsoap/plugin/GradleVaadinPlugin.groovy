@@ -53,7 +53,6 @@ import com.devsoap.plugin.tasks.RunTask
 import com.devsoap.plugin.tasks.SuperDevModeTask
 import com.devsoap.plugin.tasks.UpdateAddonStylesTask
 import com.devsoap.plugin.tasks.UpdateWidgetsetTask
-import com.devsoap.plugin.tasks.VersionCheckTask
 import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
@@ -216,18 +215,6 @@ class GradleVaadinPlugin implements Plugin<Project> {
         if ( version.baseVersion < requiredVersion ) {
             throw new UnsupportedVersionException("Your gradle version ($version) is too old. " +
                     "Plugin requires Gradle $requiredVersion+")
-        }
-
-        // Add version check as first task
-        if(gradle.startParameter.taskNames.find { it.contains('vaadin')} &&
-            !gradle.startParameter.taskNames.find { it.contains(VersionCheckTask.NAME)}){
-            if(gradle.rootProject == project) {
-                gradle.startParameter.taskNames = gradle.startParameter.taskNames.plus(0,
-                        ":$VersionCheckTask.NAME".toString())
-            } else {
-                gradle.startParameter.taskNames = gradle.startParameter.taskNames.plus(0,
-                        "$project.name:$VersionCheckTask.NAME".toString())
-            }
         }
 
         // Ensure the build dir exists as all external processes will be run inside that directory
@@ -532,8 +519,8 @@ class GradleVaadinPlugin implements Plugin<Project> {
 
                     // Needed so bootRepackage can include all dependencies in Jar
                     conf.extendsFrom(
-                            project.configurations['compile'],
-                            project.configurations['runtime'],
+                            project.configurations['compileClasspath'],
+                            project.configurations['runtimeClasspath'],
                             project.configurations[CONFIGURATION_PUSH],
                             project.configurations[CONFIGURATION_CLIENT_COMPILE]
                     )
@@ -633,7 +620,6 @@ class GradleVaadinPlugin implements Plugin<Project> {
             BuildClassPathJar task ->
             task.useClassPathJar = project.extensions.getByType(VaadinPluginExtension).useClassPathJarProvider
         }
-        addTask(project, VersionCheckTask.NAME, VersionCheckTask, VAADIN_UTIL_TASK_GROUP)
     }
 
     private static void applyVaadinTestbenchTasks(Project project) {
