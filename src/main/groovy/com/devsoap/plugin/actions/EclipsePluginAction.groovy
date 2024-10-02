@@ -70,7 +70,7 @@ class EclipsePluginAction extends PluginAction {
         RunTask runTask = project.tasks.getByName(RunTask.NAME)
         def cp = eclipse.classpath
         if ( runTask.classesDir == null ) {
-            cp.defaultOutputDir = Util.getMainSourceSet(project).outputDir
+            cp.defaultOutputDir = Util.getMainSourceSet(project).destinationDirectory.asFile.get()
         } else {
             cp.defaultOutputDir = project.file(runTask.classesDir)
         }

@@ -2,7 +2,9 @@
 In diesem Fork habe ich das Plugin mit Gradle 7.5 lauffähig gemacht.
 Die Umstellung ist nicht "sauber" erfolgt und sollte nicht weiter verwendet werden.
 Grundsätzlich kam die Imkompatibilität daher, dass die "compile" Conifguration verwendet wurde.
+Update Oktober 24: Aktualisierung auf Gradle 8.10.2
 
+____________________________________________________________
 # Gradle Vaadin Plugin
 The Gradle plugin allows you to easily build Vaadin projects with Gradle. It helps with the most tedious tasks when 
 building a Vaadin project like building the widgetset and running development mode. It also helps you to quickly get 

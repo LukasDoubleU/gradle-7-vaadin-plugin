@@ -39,7 +39,7 @@ plugins {
 
 defaultTasks 'jar'
 group = "com.devsoap.plugin"
-version = 'dialog'
+version = 'dialog25'
 archivesBaseName ='gradle-vaadin-plugin'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -250,7 +250,7 @@ pluginBundle {
  *
  **********************************************************************************************************************/
 wrapper {
-    gradleVersion = '7.5'
+    gradleVersion = '8.10.2'
     distributionUrl = distributionUrl.replace('bin', 'all') // Download sources
 }
 
@@ -263,11 +263,18 @@ publishing {
             allowInsecureProtocol = true
             credentials {
                 username "admin"
-                password "SIEHE PRUEMITTEL"
+                password "SIEHE PRUEFMITTEL"
             }
             authentication {
                 basic(BasicAuthentication)
             }
+        }
+    }
+
+    publications {
+        maven(MavenPublication) {
+            artifact jar
+            artifact sourcesJar
         }
     }
 }

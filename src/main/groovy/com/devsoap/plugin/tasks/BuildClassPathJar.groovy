@@ -38,7 +38,7 @@ class BuildClassPathJar extends Jar {
 
     BuildClassPathJar() {
         description = 'Creates a Jar with the project classpath'
-        classifier = 'classpath'
+        archiveClassifier.set('classpath')
         dependsOn 'classes'
         onlyIf { getUseClassPathJar() }
 

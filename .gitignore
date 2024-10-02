@@ -6,3 +6,4 @@
 *.iws
 src/main/resources/META-INF/maven/
 local.properties
+/lib/

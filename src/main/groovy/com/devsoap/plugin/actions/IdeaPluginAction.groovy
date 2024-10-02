@@ -62,8 +62,8 @@ class IdeaPluginAction extends PluginAction {
             module.inheritOutputDirs = false
             RunTask runTask = project.tasks.getByName(RunTask.NAME)
             if ( runTask.classesDir == null ) {
-                module.outputDir = Util.getMainSourceSet(project).outputDir
-                module.testOutputDir = Util.getMainTestSourceSet(project).outputDir
+                module.outputDir = Util.getMainSourceSet(project).destinationDirectory.asFile.get()
+                module.testOutputDir = Util.getMainTestSourceSet(project).destinationDirectory.asFile.get()
             } else {
                 module.outputDir = project.file(runTask.classesDir)
                 module.testOutputDir = project.file(runTask.classesDir)

@@ -545,7 +545,7 @@ class GradleVaadinPlugin implements Plugin<Project> {
             config.resolutionStrategy.dependencySubstitution({ DependencySubstitutions substitutions ->
                 substitutions.substitute(
                         substitutions.module('javax.validation:validation-api')
-                ).with(
+                ).using(
                         substitutions.module(
                           "javax.validation:validation-api:${Util.pluginProperties.get(VALIDATION_API_VERSION)}")
                 )
