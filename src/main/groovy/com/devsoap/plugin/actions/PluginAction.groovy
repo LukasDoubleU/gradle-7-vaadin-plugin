@@ -95,8 +95,12 @@ abstract class PluginAction {
             project.gradle.taskGraph.removeTaskExecutionListener(taskListener)
             project.gradle.taskGraph.addTaskExecutionListener(taskListener)
             execute(project)
-            project.afterEvaluate {
+            if (project.state.executed) {
                 executeAfterEvaluate(project)
+            } else {
+                project.afterEvaluate {
+                    executeAfterEvaluate(project)
+                }
             }
         }
     }
